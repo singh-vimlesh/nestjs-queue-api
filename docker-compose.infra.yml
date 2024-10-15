@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: 'rabbitmq:3-management'
+    ports:
+      - '5672:5672' # AMQP port
+      - '15672:15672' # Management dashboard
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+    healthcheck:
+      test: ['CMD', 'rabbitmqctl', 'status']
+      interval: 30s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - queue-app-network
+    restart: always
+
+  localstack:
+    image: localstack/localstack
+    ports:
+      - '4566:4566' # LocalStack port
+    environment:
+      - SERVICES=sqs
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:4566/_localstack/health']
+      interval: 30s
+      retries: 5
+      start_period: 10s
+    networks:
+      - queue-app-network
+    restart: always
+
+volumes:
+  rabbitmq_data:
+
+networks:
+  queue-app-network:
